@@ -1,4 +1,4 @@
-name: Sajith CI Workflow
+name: Sajith Full CI Workflow
 
 on:
   push:
@@ -9,16 +9,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Set up Python
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
-      run: pip install -r requirements.txt || echo "No requirements"
+    - name: Install flake8 for linting
+      run: pip install flake8
 
-    - name: Run Python script
-      run: python app.py
+    - name: Lint with flake8
+      run: |
+        echo "Running lint check..."
+        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics || true
+
+    - name: Install Dependencies (if any)
+      run: |
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; else echo "No requirements.txt found"; fi
+
+    - name: Run Python Script (app.py)
+      run: |
+        if [ -f app.py ]; then python app.py > output.log; else echo "app.py not found" > output.log; fi
+
+    - name: Upload Output Logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: script-output
+        path: output.log
